@@ -16,3 +16,7 @@ git-timewarp
 seaborn
 terrace==0.0.6
 argparse
+omegaconf
+torch
+dgl
+rdkit
