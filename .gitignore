@@ -18,3 +18,8 @@ outputs/*
 prior_work
 notebooks
 .vscode
+
+# crossdocked local dataset
+data/crossdocked_pocket10/
+out.csv
+split_by_name.pt
