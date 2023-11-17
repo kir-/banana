@@ -11,11 +11,10 @@ class InferenceDataset(data.Dataset):
     """ Dataset for inference script. Just loads a smi file and a pdb file,
     and rins with it """
 
-    def __init__(self, cfg, smi_file, pdb_file):
+    def __init__(self, cfg, smi, pdb_file):
         super().__init__()
         self.cfg = cfg
-        with open(smi_file, "r") as f:
-            self.smiles = [ line.strip() for line in f ]
+        self.smiles = [smi]
         self.prot_graph = prot_graph_from_pdb(cfg, pdb_file)
 
     def __len__(self):
