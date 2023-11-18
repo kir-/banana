@@ -5,6 +5,7 @@ import torch
 import os
 from omegaconf import OmegaConf
 from tqdm import tqdm
+import logging
 
 from terrace.comp_node import Input
 from terrace.batch import make_batch_td, DataLoader
@@ -47,12 +48,16 @@ def inference():
             ligand = os.path.join(data_path, ligand_name)
             mol = Chem.SDMolSupplier(ligand)[0]
             smi = Chem.MolToSmiles(mol)
-            dataset = InferenceDataset(cfg, smi, pocket)
+            try:
+                dataset = InferenceDataset(cfg, smi, pocket)
+            except:
+                logging.warning("{pocket_name}: pdb incorrect format")
             dataloader = DataLoader(dataset, batch_size=args.batch_size,
                                     num_workers=args.num_workers, pin_memory=True,
                                     shuffle=False)
 
             ligand_txt = ligand_name.replace('/','-')[:-3] + 'txt'
+            
             for batch in tqdm(dataloader):
                 batch = batch.to(device)
                 output = model(batch).cpu().numpy()
@@ -60,6 +65,7 @@ def inference():
                     if not x.is_active:
                         out = -100
                     f.write(f"{ligand_txt},{out}\n")
+           
 
 if __name__ == "__main__":
     with torch.no_grad():
