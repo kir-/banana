@@ -24,8 +24,7 @@ def inference():
     parser.set_defaults(no_gpu=False)
     args = parser.parse_args()
 
-    # device = "cpu" if args.no_gpu else "cuda:0"
-    device = "cpu"
+    device = "cpu" if args.no_gpu else "cuda:0"
     data = torch.load('split_by_name.pt')
     data_path = 'data/crossdocked_pocket10'
     train_data = data['train']
@@ -53,7 +52,7 @@ def inference():
                                     num_workers=args.num_workers, pin_memory=True,
                                     shuffle=False)
 
-            ligand_txt = ligand_name.split('/').replace('/','-')[:-3] + 'txt'
+            ligand_txt = ligand_name.replace('/','-')[:-3] + 'txt'
             for batch in tqdm(dataloader):
                 batch = batch.to(device)
                 output = model(batch).cpu().numpy()
