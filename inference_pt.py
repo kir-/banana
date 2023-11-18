@@ -41,7 +41,8 @@ def inference():
     model.eval()
 
     with open(args.out_file, "a") as f:
-        # TODO Generalize dataset to pocket or multiple pockets
+        # Warning this runs on per tuple of a pt file and therefore is very slow
+        # TODO Generalize dataset to run on pocket or multiple pockets
         for entry in tqdm(combined_data, desc="Inference on protein + ligand", unit="ligand"):
             pocket_name, ligand_name = entry
             pocket = os.path.join(data_path, pocket_name)
