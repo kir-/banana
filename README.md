@@ -12,6 +12,8 @@ Once you've installed all the dependencies, you're ready to run the pretrained m
 
 If the inference script fails to load any smiles in the dataset, it will output -100 for the BANANA score.
 
+Colab [here](https://colab.research.google.com/drive/1XyLrBIRzMlpdPZUHV2vCFDEZz2xuqIi0?usp=sharing). You can use this to run inference on crossdocked2020.
+
 ## Training
 
 If you want to train the model yourself, first make sure you've downloaded the [BigBind dataset](https://storage.googleapis.com/bigbind/BigBindV1.tar.bz2).
