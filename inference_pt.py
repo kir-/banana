@@ -6,6 +6,8 @@ import os
 from omegaconf import OmegaConf
 from tqdm import tqdm
 import logging
+from torch.profiler import profile, ProfilerActivity
+
 
 from terrace.comp_node import Input
 from terrace.batch import make_batch_td, DataLoader
@@ -61,8 +63,16 @@ def inference():
             
             for batch in tqdm(dataloader):
                 batch = batch.to(device)
-                output = model(batch).cpu().numpy()
-                for x, out in zip(batch, output):
+                with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], 
+                             record_shapes=True, 
+                             profile_memory=True, 
+                             use_cuda=not args.no_gpu) as prof:
+                    output = model(batch).cpu().numpy()
+                
+                print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))                
+                # output = model(batch).cpu().numpy()
+                for x, logits in zip(batch, output):
+                    prob = torch.sigmoid(logits)
                     if not x.is_active:
                         out = -100
                     f.write(f"{ligand_txt},{out}\n")
