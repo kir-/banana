@@ -49,22 +49,15 @@ def inference():
             for i, entry in enumerate(tqdm(data, desc="Inference on protein + ligand", unit="ligand")):
                 pocket_path, ligand_smi, score = entry
                 pocket_path = pocket_path[5:]
-                pocket = os.path.join(data_path, pocket_name)
-                ligand = os.path.join(data_path, ligand_name)
-                mol = Chem.SDMolSupplier(ligand)[0]
-                smi = Chem.MolToSmiles(mol)
                 if i % 1000 == 0:
-                    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, profile_memory=True, use_cuda=not args.no_gpu) as prof:
-                        pocket_name, ligand_name = entry
+                    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, profile_memory=True, use_cuda=not args.no_gpu) as prof
                         try:
-                            dataset = InferenceDataset(cfg, smi, pocket)
+                            dataset = InferenceDataset(cfg, ligand_smi, pocket_path)
                         except:
                             logging.warning("{pocket_name}: pdb incorrect format")
                         dataloader = DataLoader(dataset, batch_size=args.batch_size,
                                                 num_workers=args.num_workers, pin_memory=True,
                                                 shuffle=False)
-
-                        ligand_txt = ligand_name.replace('/','-')[:-3] + 'txt'
                         
                         for batch in tqdm(dataloader):
                             batch = batch.to(device)
@@ -75,12 +68,18 @@ def inference():
                                 prob = torch.sigmoid(logits).cpu().numpy()
                                 if not x.is_active:
                                     out = -100
-                                f.write(f"{ligand_txt},{prob}\n")
+                                f.write(f"{score},{prob}\n")
                     profiler_log.write(f"Profiling results for {entry}:\n")
                     profiler_log.write(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
                     profiler_log.write("\n\n")  # Add some space between entries
                 else:
-                    ligand_txt = ligand_name.replace('/','-')[:-3] + 'txt'
+                    try:
+                        dataset = InferenceDataset(cfg, ligand_smi, pocket_path)
+                    except:
+                        logging.warning("{pocket_name}: pdb incorrect format")
+                    dataloader = DataLoader(dataset, batch_size=args.batch_size,
+                                                num_workers=args.num_workers, pin_memory=True,
+                                                shuffle=False)
                         
                     for batch in tqdm(dataloader):
                         batch = batch.to(device)
