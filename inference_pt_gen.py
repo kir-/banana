@@ -28,9 +28,7 @@ def inference():
     args = parser.parse_args()
 
     device = "cpu" if args.no_gpu else "cuda:0"
-    data = torch.load('split_by_name.pt')
     data = torch.load("data/gflownet_generated_molecules.pt")
-    data_path = 'data/crossdocked_pocket10'
     
     cfg = OmegaConf.load("configs/classification.yaml")
     in_node = Input(make_batch_td(IsActiveData.get_type_data(cfg)))
@@ -48,13 +46,17 @@ def inference():
             # TODO Generalize dataset to run on pocket or multiple pockets
             for i, entry in enumerate(tqdm(data, desc="Inference on protein + ligand", unit="ligand")):
                 pocket_path, ligand_smi, score = entry
-                pocket_path = pocket_path[5:]
+                pocket_path_parts = pocket_path.split('/')
+                pocket_path = os.path.join('data', pocket_path_parts[3],pocket_path_parts[4],pocket_path_parts[5])
+                print(os.path.isfile(pocket_path) )
                 if i % 1000 == 0:
-                    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, profile_memory=True, use_cuda=not args.no_gpu) as prof
+                    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, profile_memory=True, use_cuda=not args.no_gpu) as prof:
                         try:
                             dataset = InferenceDataset(cfg, ligand_smi, pocket_path)
                         except:
-                            logging.warning("{pocket_name}: pdb incorrect format")
+                            logging.warning("{pocket_path}: pdb incorrect format")
+                            continue
+
                         dataloader = DataLoader(dataset, batch_size=args.batch_size,
                                                 num_workers=args.num_workers, pin_memory=True,
                                                 shuffle=False)
@@ -76,7 +78,8 @@ def inference():
                     try:
                         dataset = InferenceDataset(cfg, ligand_smi, pocket_path)
                     except:
-                        logging.warning("{pocket_name}: pdb incorrect format")
+                        logging.warning("{pocket_path}: pdb incorrect format")
+                        continue
                     dataloader = DataLoader(dataset, batch_size=args.batch_size,
                                                 num_workers=args.num_workers, pin_memory=True,
                                                 shuffle=False)
